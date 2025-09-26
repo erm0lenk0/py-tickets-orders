@@ -1,9 +1,9 @@
-from datetime import datetime
-from rest_framework import viewsets
+import datetime
+from rest_framework import viewsets, permissions
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
-from django.utils.dateparse import parse_date
 
 from cinema.serializers import (
     GenreSerializer,
@@ -100,10 +100,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if date_str:
             try:
-                date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                start = datetime.combine(date, datetime.min.time())
-                end = datetime.combine(date, datetime.max.time())
-                queryset = queryset.filter(show_time__range=(start, end))
+                date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+                queryset = queryset.filter(show_time__date=date)
             except ValueError:
                 pass
 
@@ -130,6 +128,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     pagination_class = OrderSetPagination
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
